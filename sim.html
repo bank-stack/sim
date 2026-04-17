@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Valor Inmueble | Versión Completa</title>
+    <!-- Chart.js para el gráfico -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .range-value {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .result-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .result-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .result-value small {
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-size: 28px;
+        }
+
+        .disclaimer {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #856404;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .badge-info {
+            background: #3498db;
+            color: white;
+        }
+
+        .total-cuota {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .total-cuota .result-label {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .total-cuota .result-value {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Simulador de Valor Inmueble</h1>
+            <p>Crédito hipotecario con seguros, impuestos y gráfico de amortización</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Columna izquierda: Formulario -->
+            <div class="form-section">
+                <div class="section-title">📝 Datos del crédito</div>
+                
+                <div class="form-group">
+                    <label>💰 Valor del inmueble</label>
+                    <input type="number" id="valorInmueble" value="300000000" step="10000000">
+                    <div class="range-value">
+                        <span>$100.000.000</span>
+                        <span>$500.000.000+</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>🏦 Porcentaje de financiación</label>
+                    <input type="range" id="porcentajeFinanciacion" min="10" max="80" value="70" step="5">
+                    <div class="range-value">
+                        <span>10% (enganche alto)</span>
+                        <span>80% (máximo banco)</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>📅 Plazo (años)</label>
+                    <select id="plazo">
+                        <option value="5">5 años</option>
+                        <option value="10">10 años</option>
+                        <option value="15">15 años</option>
+                        <option value="20" selected>20 años</option>
+                        <option value="25">25 años</option>
+                        <option value="30">30 años</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>📊 Tasa de interés anual (%)</label>
+                    <input type="number" id="tasaInteres" value="12" step="0.5" min="4" max="24">
+                </div>
+                
+                <div class="section-title" style="margin-top: 20px;">🛡️ Seguros y gastos</div>
+                
+                <div class="form-group">
+                    <label>🔒 Seguro de vida (% sobre préstamo)</label>
+                    <input type="number" id="seguroVida" value="0.5" step="0.1" min="0" max="2">
+                    <div class="range-value">
+                        <span>0% (sin seguro)</span>
+                        <span>2% (máximo)</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>🏠 Seguro de inmueble (% sobre valor)</label>
+                    <input type="number" id="seguroInmueble" value="0.3" step="0.1" min="0" max="1">
+                    <div class="range-value">
+                        <span>0% (sin seguro)</span>
+                        <span>1% (máximo)</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>📄 Gastos de escrituración (% del valor)</label>
+                    <input type="number" id="gastosEscrituracion" value="1.5" step="0.5" min="0" max="5">
+                    <div class="range-value">
+                        <span>Incluye: impuestos, notaría, registro</span>
+                    </div>
+                </div>
+                
+                <button id="calcularBtn">🔄 Actualizar simulación</button>
+            </div>
+            
+            <!-- Columna derecha: Resultados -->
+            <div class="results-section">
+                <div class="section-title">📊 Resultados financieros</div>
+                
+                <div class="result-card total-cuota">
+                    <div class="result-label">💵 Cuota mensual TOTAL (con seguros)</div>
+                    <div class="result-value highlight" id="cuotaTotalMostrada">$0</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">🏦 Préstamo solicitado</div>
+                    <div class="result-value" id="prestamoMostrado">$0</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">💸 Enganche (tu aporte inicial)</div>
+                    <div class="result-value" id="engancheMostrado">$0</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">💰 Total pagado al final del plazo</div>
+                    <div class="result-value" id="totalPagado">$0</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">💸 Intereses totales pagados</div>
+                    <div class="result-value" id="interesesTotales">$0</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">🛡️ Seguros totales pagados</div>
+                    <div class="result-value" id="segurosTotales">$0</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">📄 Gastos de escrituración (iniciales)</div>
+                    <div class="result-value" id="gastosEscrituracionMostrados">$0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico de amortización -->
+        <div class="chart-container">
+            <div class="section-title">📈 Gráfico de amortización (capital vs intereses)</div>
+            <canvas id="amortizacionChart"></canvas>
+            <div class="disclaimer" style="margin-top: 15px;">
+                📉 El gráfico muestra cómo con el tiempo pagas menos intereses y más capital.
+            </div>
+        </div>
+        
+        <div class="disclaimer" style="margin: 0 30px 30px 30px;">
+            ⚠️ Este simulador incluye seguros y gastos estimados. Las condiciones reales dependen de cada banco y perfil crediticio. Consulta con un asesor financiero.
+        </div>
+    </div>
+    
+    <script>
+        let chart;
+        
+        // Formatear moneda
+        function formatearMoneda(valor) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(valor);
+        }
+        
+        // Calcular cuota mensual (sistema francés)
+        function calcularCuotaMensual(prestamo, tasaAnual, años) {
+            const tasaMensual = (tasaAnual / 100) / 12;
+            const numeroPagos = años * 12;
+            
+            if (tasaMensual === 0 || prestamo === 0) {
+                return prestamo / numeroPagos;
+            }
+            
+            const cuota = prestamo * (tasaMensual * Math.pow(1 + tasaMensual, numeroPagos)) / (Math.pow(1 + tasaMensual, numeroPagos) - 1);
+            return cuota;
+        }
+        
+        // Calcular amortización mes a mes
+        function calcularAmortizacion(prestamo, tasaAnual, años) {
+            const tasaMensual = (tasaAnual / 100) / 12;
+            const numeroPagos = años * 12;
+            const cuotaMensual = calcularCuotaMensual(prestamo, tasaAnual, años);
+            
+            let saldo = prestamo;
+            const amortizacion = [];
+            
+            for (let i = 1; i <= numeroPagos; i++) {
+                const intereses = saldo * tasaMensual;
+                const capital = cuotaMensual - intereses;
+                saldo -= capital;
+                
+                amortizacion.push({
+                    mes: i,
+                    cuota: cuotaMensual,
+                    intereses: intereses,
+                    capital: capital,
+                    saldo: Math.max(0, saldo)
+                });
+            }
+            
+            return amortizacion;
+        }
+        
+        // Actualizar gráfico
+        function actualizarGrafico(amortizacion) {
+            const ctx = document.getElementById('amortizacionChart').getContext('2d');
+            
+            // Tomar datos cada 12 meses (anual)
+            const datosAnuales = [];
+            for (let i = 0; i < amortizacion.length; i += 12) {
+                const año = Math.floor(i / 12) + 1;
+                const anioIntereses = amortizacion.slice(i, i + 12).reduce((sum, m) => sum + m.intereses, 0);
+                const anioCapital = amortizacion.slice(i, i + 12).reduce((sum, m) => sum + m.capital, 0);
+                datosAnuales.push({ año, anioIntereses, anioCapital });
+            }
+            
+            if (chart) {
+                chart.destroy();
+            }
+            
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: datosAnuales.map(d => `Año ${d.año}`),
+                    datasets: [
+                        {
+                            label: 'Intereses pagados',
+                            data: datosAnuales.map(d => d.anioIntereses),
+                            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                            borderColor: 'rgba(231, 76, 60, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Capital pagado',
+                            data: datosAnuales.map(d => d.anioCapital),
+                            backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                            borderColor: 'rgba(46, 204, 113, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatearMoneda(context.raw)}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return formatearMoneda(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Función principal
+        function actualizarSimulador() {
+            // Obtener valores básicos
+            let valorInmueble = parseFloat(document.getElementById('valorInmueble').value);
+            const porcentajeFinanciacion = parseFloat(document.getElementById('porcentajeFinanciacion').value) / 100;
+            const años = parseInt(document.getElementById('plazo').value);
+            const tasaAnual = parseFloat(document.getElementById('tasaInteres').value);
+            
+            // Seguros y gastos
+            const seguroVidaPorcentaje = parseFloat(document.getElementById('seguroVida').value) / 100;
+            const seguroInmueblePorcentaje = parseFloat(document.getElementById('seguroInmueble').value) / 100;
+            const gastosEscrituracionPorcentaje = parseFloat(document.getElementById('gastosEscrituracion').value) / 100;
+            
+            // Validaciones
+            if (isNaN(valorInmueble) || valorInmueble <= 0) {
+                valorInmueble = 100000000;
+                document.getElementById('valorInmueble').value = valorInmueble;
+            }
+            
+            // Cálculos base
+            const prestamo = valorInmueble * porcentajeFinanciacion;
+            const enganche = valorInmueble - prestamo;
+            
+            // Seguros (anuales, se dividen en 12 meses)
+            const seguroVidaAnual = prestamo * seguroVidaPorcentaje;
+            const seguroInmuebleAnual = valorInmueble * seguroInmueblePorcentaje;
+            const segurosMensuales = (seguroVidaAnual + seguroInmuebleAnual) / 12;
+            
+            // Cuota del préstamo + seguros
+            const cuotaPrestamo = calcularCuotaMensual(prestamo, tasaAnual, años);
+            const cuotaTotalMensual = cuotaPrestamo + segurosMensuales;
+            
+            // Totales
+            const totalPagadoPrestamo = cuotaPrestamo * años * 12;
+            const totalSeguros = segurosMensuales * años * 12;
+            const totalPagadoGeneral = totalPagadoPrestamo + totalSeguros;
+            const interesesTotales = totalPagadoPrestamo - prestamo;
+            
+            // Gastos iniciales
+            const gastosEscrituracion = valorInmueble * gastosEscrituracionPorcentaje;
+            
+            // Mostrar resultados
+            document.getElementById('cuotaTotalMostrada').innerHTML = formatearMoneda(cuotaTotalMensual);
+            document.getElementById('prestamoMostrado').innerHTML = formatearMoneda(prestamo);
+            document.getElementById('engancheMostrado').innerHTML = formatearMoneda(enganche);
+            document.getElementById('totalPagado').innerHTML = formatearMoneda(totalPagadoGeneral);
+            document.getElementById('interesesTotales').innerHTML = formatearMoneda(interesesTotales);
+            document.getElementById('segurosTotales').innerHTML = formatearMoneda(totalSeguros);
+            document.getElementById('gastosEscrituracionMostrados').innerHTML = formatearMoneda(gastosEscrituracion);
+            
+            // Calcular y mostrar amortización
+            const amortizacion = calcularAmortizacion(prestamo, tasaAnual, años);
+            actualizarGrafico(amortizacion);
+        }
+        
+        // Event listeners
+        document.getElementById('calcularBtn').addEventListener('click', actualizarSimulador);
+        document.getElementById('valorInmueble').addEventListener('input', actualizarSimulador);
+        document.getElementById('porcentajeFinanciacion').addEventListener('input', actualizarSimulador);
+        document.getElementById('plazo').addEventListener('change', actualizarSimulador);
+        document.getElementById('tasaInteres').addEventListener('input', actualizarSimulador);
+        document.getElementById('seguroVida').addEventListener('input', actualizarSimulador);
+        document.getElementById('seguroInmueble').addEventListener('input', actualizarSimulador);
+        document.getElementById('gastosEscrituracion').addEventListener('input', actualizarSimulador);
+        
+        // Ejecutar al cargar
+        actualizarSimulador();
+    </script>
+</body>
+</html>
